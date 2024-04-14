@@ -12,5 +12,5 @@ async def read_root():
 
 @app.get("/db")
 def db_var():
-    return("DB", settings.DATABASE_URL)
+    return("DB",  settings.DATABASE_URL)
 
