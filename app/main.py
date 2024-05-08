@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from sqlmodel import SQLModel, Field,create_engine
+from sqlmodel import SQLModel, Field,create_engine, Session
 from app import settings
 
 
@@ -14,10 +14,24 @@ class Todo(SQLModel, table=True):
     
 # ENGINE IS ONE TIME IN WHOLE APPLICATION
 connection_string : str = str(settings.DATABASE_URL).replace("postgresql", "postgresql+psycopg")
-engine = create_engine(connection_string, connect_args={"sslmode": "require"}, pool_recycle=300)
+engine = create_engine(connection_string, connect_args={"sslmode": "require"}, pool_recycle=300, pool_size=10, echo=True)
+
+SQLModel.metadata.create_all(engine)
+
+todo1 : Todo = Todo (description= "First Todo")
+todo2 : Todo = Todo (description= "Second Todo")
 
 
+# Session: Separate session for each functionality/transaction
+
+session = Session(engine)
 app: FastAPI = FastAPI()
+
+session.add(todo1)
+session.add(todo2)
+session.commit()
+
+
 
 @app.get("/")
 async def root():
