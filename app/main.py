@@ -1,6 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from sqlmodel import SQLModel, Field, create_engine, Session
 from app import settings
+from typing import Annotated
 
 
 # Create Model
@@ -20,7 +21,12 @@ SQLModel.metadata.create_all(engine)
 
 
 # Session: Separate session for each functionality/transaction
-session = Session(engine)
+# session = Session(engine)
+
+def get_session():
+    with Session(engine) as session:
+        yield session
+
 
 app: FastAPI = FastAPI()
 
@@ -29,8 +35,11 @@ async def root():
     return {"Message": "Welcome to dailyDo todo App"}
 
 @app.post("/todos")
-async def create_todo():
-    ...
+async def create_todo(todo:Todo, session:Annotated[Session,Depends(get_session)]):
+    session.add(todo)
+    session.commit()
+    session.refresh(todo)
+    return todo
     
 @app.get("/todos")
 async def get_all_todos():
